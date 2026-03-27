@@ -13,7 +13,7 @@ settings.yaml
 *.csv
 Daily_Settlement_*.pdf
 Kashf_*.xlsx
-
+*.ttf 
 # --- ملفات بيئة بايثون والنظام ---
 __pycache__/
 *.py[cod]
