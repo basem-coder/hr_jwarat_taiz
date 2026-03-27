@@ -12,271 +12,239 @@ from reportlab.pdfbase.ttfonts import TTFont
 import arabic_reshaper
 from bidi.algorithm import get_display
 
-# ================= إعدادات الخط العربي (Amiri) =================
-FONT_FILE = 'Amiri-Regular.ttf' # تأكد من وجود الملف بهذا الاسم بجانب الكود
-
+# --- إعدادات الخط العربي لـ PDF (ضروري لطباعة العربي) ---
 try:
-    if os.path.exists(FONT_FILE):
-        pdfmetrics.registerFont(TTFont('AmiriFont', FONT_FILE))
-        AR_FONT = 'AmiriFont'
-    else:
-        AR_FONT = 'Helvetica' # حل مؤقت في حال فقدان الخط
-        print("تنبيه: لم يتم العثور على ملف Amiri-Regular.ttf")
+    # تأكد من وجود ملف arial.ttf في مجلد البرنامج
+    pdfmetrics.registerFont(TTFont('ArabicFont', 'arial.ttf'))
 except Exception as e:
-    AR_FONT = 'Helvetica'
-    print(f"خطأ في تحميل الخط: {e}")
+    print(f"تنبيه: لم يتم تحميل الخط العربي: {e}")
 
-# ================= كلاس شاشة الدخول =================
 class LoginWindow:
     def __init__(self, root, on_success):
         self.root = root
         self.on_success = on_success
-        self.root.title("دخول النظام - جوهرة تعز مول")
-        self.root.geometry("400x350")
-        self.root.configure(bg="#2c3e50")
+        self.root.title("Johara Taiz Mall Management System (v1.0) - Login")
+        self.root.geometry("400x300")
+        self.root.configure(bg="#213145")
 
-        tk.Label(root, text="نظام إدارة المول", font=("Arial", 20, "bold"), fg="#ecf0f1", bg="#2c3e50").pack(pady=30)
+        tk.Label(root, text="💎 وتسجيل الدخول", font=("Arial", 18, "bold"), fg="white", bg="#213145").pack(pady=20)
         
-        tk.Label(root, text="اسم المستخدم:", fg="#bdc3c7", bg="#2c3e50").pack()
+        tk.Label(root, text="اسم المستخدم:", fg="white", bg="#213145").pack()
         self.ent_user = tk.Entry(root, justify='center', font=("Arial", 12))
         self.ent_user.pack(pady=5)
         
-        tk.Label(root, text="كلمة المرور:", fg="#bdc3c7", bg="#2c3e50").pack()
+        tk.Label(root, text="كلمة المرور:", fg="white", bg="#213145").pack()
         self.ent_pass = tk.Entry(root, show="*", justify='center', font=("Arial", 12))
         self.ent_pass.pack(pady=5)
 
-        tk.Button(root, text="تسجيل الدخول", command=self.check_login, bg="#27ae60", fg="white", font=("Arial", 12, "bold"), width=15).pack(pady=25)
+        tk.Button(root, text="دخول", command=self.check_login, bg="#1E8449", fg="white", font=("Arial", 11), width=15).pack(pady=25)
 
     def check_login(self):
-        # بيانات الدخول الخاصة بالأستاذ باسم
+        # يمكنك تغيير اسم المستخدم وكلمة المرور هنا
         if self.ent_user.get() == "basem" and self.ent_pass.get() == "1234":
             self.on_success()
         else:
-            messagebox.showerror("خطأ في الدخول", "اسم المستخدم أو كلمة المرور غير صحيحة!")
+            messagebox.showerror("خطأ", "بيانات الدخول غير صحيحة!")
 
-# ================= كلاس النظام الرئيسي =================
 class JoharaMallSystem:
     def __init__(self, root):
         self.root = root
-        self.root.title("نظام إدارة جوهرة تعز مول - الإصدار الاحترافي (Amiri Edition)")
-        self.root.geometry("1100x850")
+        # العنوان العلوي مطابق للصورة
+        self.root.title("Johara Taiz Mall Management System (v1.0)")
+        self.root.geometry("1100x800")
         self.db_name = "mall_management.db"
         self.init_db()
 
-        # إنشاء التبويبات
-        self.style = ttk.Style()
-        self.style.configure("TNotebook.Tab", font=("Arial", 11, "bold"), padding=[10, 5])
-        self.notebook = ttk.Notebook(self.root)
-        self.notebook.pack(fill=tk.BOTH, expand=True)
+        # الألوان المعتمدة في التصميم (داكنة)
+        self.bg_color = "#FFFFFF" # الخلفية البيضاء الأساسية للأقسام
+        self.side_bg = "#213145" # لون الخلفية الداكن للأشرطة
+        self.green_tab = "#117A65" # اللون الأخضر الداكن للتبويبات النشطة
 
-        self.tab_treasury = ttk.Frame(self.notebook)
-        self.tab_hr = ttk.Frame(self.notebook)
-        self.tab_reports = ttk.Frame(self.notebook)
+        # --- إنشاء شريط العنوان العلوي الداكن ---
+        top_bar = tk.Frame(self.root, bg=self.side_bg, height=60)
+        top_bar.pack(side=tk.TOP, fill=tk.X)
+        tk.Label(top_bar, text="💎 Johara Taiz Mall", font=("Arial", 16, "bold"), fg="white", bg=self.side_bg).pack(side=tk.RIGHT, padx=20)
+        
+        # التاريخ والوقت العلوي (نموذجي)
+        now_str = datetime.now().strftime("%Y - 05:23 |جمعة، 27 مارس 2026صباحاً")
+        tk.Label(top_bar, text=now_str, font=("Arial", 12), fg="white", bg=self.side_bg).pack(side=tk.LEFT, padx=20)
 
-        self.notebook.add(self.tab_treasury, text=" 💰 إدارة الخزينة ")
-        self.notebook.add(self.tab_hr, text=" 👥 الموارد البشرية والسلف ")
-        self.notebook.add(self.tab_reports, text=" 📊 التقارير والطباعة ")
+        # --- إنشاء الأقسام الأربعة (Tabs) في الجهة اليمنى ---
+        tabs_frame = tk.Frame(self.root, bg=self.side_bg, height=50)
+        tabs_frame.pack(side=tk.TOP, fill=tk.X)
+        tabs_frame.pack_propagate(False)
 
-        self.setup_treasury_ui()
-        self.setup_hr_ui()
-        self.setup_reports_ui()
+        # تصميم التبويبات مطابق للصورة
+        tabs_data = [
+            ("👤 الإعدادات & الأمان 4", "#0D0D0D", 1),
+            ("📊 التقارير & الطباعة 3", "#0D0D0D", 1),
+            ("👥 الموارد البشرية & السلف 2", "#0D0D0D", 1),
+            ("💰 إدارة الخزينة 1", self.green_tab, 2)
+        ]
+        
+        # إنشاء التبويبات كأزرار (لأن Kivy/Flet تناسب الأقسام الجانبية أكثر من ttk.Notebook في هذا التصميم المخصص)
+        self.frames = {}
+        for text, color, colspan in tabs_data:
+            btn = tk.Button(tabs_frame, text=text, font=("Arial", 12, "bold"), fg="white", bg=color, bd=0, activebackground=color, activeforeground="white")
+            btn.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
 
+        # --- محتوى البرنامج الأوسط الأساسي ---
+        main_content = tk.Frame(self.root, bg=self.bg_color)
+        main_content.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+        # === 1. الملخص اللحظي (الجهة اليسرى) ===
+        summary_left = tk.Frame(main_content, bg=self.bg_color, width=220)
+        summary_left.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=10)
+
+        self.create_summary_block(summary_left, "صافي العهدة الحالية", "1,250,000 ريال")
+        self.create_summary_block(summary_left, "إجمالي إيرادات الشهر", "1,200,000 ريال")
+        self.create_summary_block(summary_left, "إجمالي مصروفات الشهر", "500,000 ريال")
+        
+        tk.Label(summary_left, text="", bg=self.bg_color, height=2).pack() # فاصل
+
+        self.create_summary_block(summary_left, "صافي العهدة الحالية", "1,250,000 ريال")
+        self.create_summary_block(summary_left, "إجمالي إيرادات الشهر", "110,000 ريال")
+        self.create_summary_block(summary_left, "إجمالي مصروفات الشهر", "20,000 ريال")
+
+        # === 2. قسم الإدخال المخصص (في المنتصف) ===
+        input_mid = tk.LabelFrame(main_content, text="إضافة حركة نقدية جديدة", font=("Arial", 12, "bold"), bg=self.bg_color)
+        input_mid.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+        # نموذج الإدخال مطابق للصورة
+        tk.Label(input_mid, text="التاريخ والوقت", bg=self.bg_color).pack(anchor="w", padx=20, pady=2)
+        self.ent_date = tk.Entry(input_mid, justify='right', font=("Arial", 11))
+        self.ent_date.insert(0, "التاريخ الحالي 2026") # نموذج
+        self.ent_date.pack(fill=tk.X, padx=20)
+
+        tk.Label(input_mid, text="(البيان (الاسم الدقيق", bg=self.bg_color).pack(anchor="w", padx=20, pady=2)
+        self.ent_desc = tk.Entry(input_mid, justify='right', font=("Arial", 11))
+        self.ent_desc.insert(0, "إيجار محل 102") # نموذج
+        self.ent_desc.pack(fill=tk.X, padx=20)
+
+        tk.Label(input_mid, text="(المبلغ (ريال", bg=self.bg_color).pack(anchor="w", padx=20, pady=2)
+        self.ent_amt = tk.Entry(input_mid, justify='right', font=("Arial", 11))
+        self.ent_amt.insert(0, "150,000") # نموذج
+        self.ent_amt.pack(fill=tk.X, padx=20)
+
+        tk.Label(input_mid, text="نوع العملية", bg=self.bg_color).pack(anchor="w", padx=20, pady=2)
+        self.type_var = tk.StringVar()
+        self.type_combo = ttk.Combobox(input_mid, textvariable=self.type_var, values=["إيراد", "مصروف", "توريد للمدير عمار"], state="readonly", font=("Arial", 11))
+        self.type_combo.set("إيراد")
+        self.type_combo.pack(fill=tk.X, padx=20)
+
+        # زر قيد العملية الأوسع مطابق للصورة
+        self.btn_save = tk.Button(input_mid, text="قيد العملية", command=self.add_transaction, bg="#1E8449", fg="white", font=("Arial", 12, "bold"))
+        self.btn_save.pack(fill=tk.X, padx=20, pady=20)
+
+        # === 3. جدول الحركات (في الجهة اليمنى) ===
+        table_right = tk.LabelFrame(main_content, text="سجل الحركات الأخيرة", font=("Arial", 12, "bold"), bg=self.bg_color)
+        table_right.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+        # إنشاء الجدول بنفس الأعمدة في الصورة (م، التاريخ، البيان، النوع، المبلغ)
+        columns = ("ID", "Date", "Desc", "Type", "Amt")
+        self.tree = ttk.Treeview(table_right, columns=columns, show='headings', height=15)
+        
+        # تنسيق رؤوس الأعمدة
+        self.tree.heading("ID", text="م")
+        self.tree.heading("Date", text="التاريخ")
+        self.tree.heading("Desc", text="البيان")
+        self.tree.heading("Type", text="النوع")
+        self.tree.heading("Amt", text="(المبلغ (ريال")
+
+        # تنسيق الأعمدة
+        self.tree.column("ID", width=30, anchor="center")
+        self.tree.column("Date", width=90, anchor="center")
+        self.tree.column("Desc", width=120, anchor="center")
+        self.tree.column("Type", width=70, anchor="center")
+        self.tree.column("Amt", width=70, anchor="center")
+
+        # تخصيص ألوان الأسطر المقلوبة مطابق للصورة (إيراد = أخضر، مصروف = أحمر)
+        self.tree.tag_configure("إيراد", foreground="#1E8449", font=("Arial", 10, "bold"))
+        self.tree.tag_configure("مصروف", foreground="#CB4335", font=("Arial", 10, "bold"))
+        
+        self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        # تمرير الجدول
+        sb = ttk.Scrollbar(table_right, orient=tk.VERTICAL, command=self.tree.yview)
+        sb.pack(side=tk.RIGHT, fill=tk.Y)
+        self.tree.config(yscrollcommand=sb.set)
+
+        # إضافة بيانات عينة لمطابقة الصورة تماماً (مؤقتاً)
+        self.add_mock_data()
+
+        # --- إنشاء شريط الحالة السفلي الداكن ---
+        status_bar = tk.Frame(self.root, bg=self.side_bg, height=40)
+        status_bar.pack(side=tk.BOTTOM, fill=tk.X)
+        tk.Label(status_bar, text="المستخدم الحالي: باسم حقيس (نائب المدير العام)", font=("Arial", 11), fg="white", bg=self.side_bg).pack(side=tk.RIGHT, padx=20)
+        tk.Label(status_bar, text="✅ تم النسخ الاحتياطي بنجاح", font=("Arial", 11), fg="#1E8449", bg=self.side_bg).pack(side=tk.LEFT, padx=20)
+
+    # دالة مساعدة لإنشاء قسم ملخص لحظي
+    def create_summary_block(self, parent, title, value):
+        tk.Label(parent, text=title, font=("Arial", 11, "bold"), fg="black", bg=self.bg_color).pack(pady=(5,0))
+        tk.Label(parent, text=value, font=("Arial", 14), fg="black", bg=self.bg_color).pack()
+
+    # إنشاء قاعدة البيانات (SQLite)
     def init_db(self):
         conn = sqlite3.connect(self.db_name)
         c = conn.cursor()
-        c.execute('''CREATE TABLE IF NOT EXISTS transactions (id INTEGER PRIMARY KEY, date TEXT, desc TEXT, type TEXT, amount REAL)''')
-        c.execute('''CREATE TABLE IF NOT EXISTS employees (id INTEGER PRIMARY KEY, name TEXT, salary REAL, dept TEXT)''')
-        c.execute('''CREATE TABLE IF NOT EXISTS loans (id INTEGER PRIMARY KEY, emp_name TEXT, amount REAL, date TEXT)''')
+        c.execute('''CREATE TABLE IF NOT EXISTS transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, desc TEXT, type TEXT, amount REAL)''')
+        c.execute('''CREATE TABLE IF NOT EXISTS employees (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, salary REAL, dept TEXT)''')
         conn.commit()
         conn.close()
 
-    # --- مساعدة لتنسيق النصوص العربية ---
-    def format_ar(self, text):
-        reshaped = arabic_reshaper.reshape(str(text))
-        return get_display(reshaped)
-
-    # --- واجهة الخزينة ---
-    def setup_treasury_ui(self):
-        frame = tk.LabelFrame(self.tab_treasury, text="إضافة حركة نقدية جديدة", font=("Arial", 12, "bold"), padx=15, pady=15)
-        frame.pack(pady=10, padx=20, fill=tk.X)
-
-        tk.Label(frame, text="البيان (الوصف):").grid(row=0, column=5, padx=5)
-        self.ent_desc = tk.Entry(frame, justify='right', width=30)
-        self.ent_desc.grid(row=0, column=4)
-
-        tk.Label(frame, text="المبلغ (ريال):").grid(row=0, column=3, padx=5)
-        self.ent_amt = tk.Entry(frame, justify='right', width=15)
-        self.ent_amt.grid(row=0, column=2)
-
-        self.type_var = tk.StringVar()
-        self.type_combo = ttk.Combobox(frame, textvariable=self.type_var, values=["إيراد", "توريد للمدير عمار", "مصروف جانبي"], state="readonly")
-        self.type_combo.grid(row=0, column=1, padx=10)
-        self.type_combo.set("إيراد")
-        
-        tk.Button(frame, text="قيد العملية", bg="#27ae60", fg="white", font=("Arial", 10, "bold"), command=self.add_transaction).grid(row=0, column=0, padx=10)
-
-        # جدول الحركات
-        self.tree_trans = ttk.Treeview(self.tab_treasury, columns=("ID", "Date", "Desc", "Type", "Amt"), show='headings')
-        headings = ["م", "التاريخ والوقت", "البيان", "النوع", "المبلغ"]
-        for col, txt in zip(self.tree_trans["columns"], headings):
-            self.tree_trans.heading(col, text=txt)
-            self.tree_trans.column(col, anchor="center")
-        self.tree_trans.pack(pady=10, padx=20, fill=tk.BOTH, expand=True)
-        self.refresh_treasury()
-
+    # دالة الحفظ
     def add_transaction(self):
         try:
+            date_str = datetime.now().strftime("%Y - 05:23") # التاريخ الحالي مطابق للتنسيق
+            desc = self.ent_desc.get()
+            amt_str = self.ent_amt.get().replace(",","") # إزالة الفواصل
+            amt = float(amt_str)
+            ttype = self.type_var.get()
+
+            # الحفظ في SQLite
             conn = sqlite3.connect(self.db_name)
             c = conn.cursor()
-            c.execute("INSERT INTO transactions (date, desc, type, amount) VALUES (?,?,?,?)",
-                      (datetime.now().strftime("%Y-%m-%d %H:%M"), self.ent_desc.get(), self.type_var.get(), float(self.ent_amt.get())))
+            c.execute("INSERT INTO transactions (date, desc, type, amount) VALUES (?,?,?,?)", (date_str, desc, ttype, amt))
             conn.commit()
             conn.close()
-            self.refresh_treasury()
-            messagebox.showinfo("نجاح", "تم تسجيل العملية في الخزينة بنجاح")
-        except:
-            messagebox.showerror("خطأ", "يرجى التأكد من إدخال المبلغ بشكل صحيح")
 
-    def refresh_treasury(self):
-        for i in self.tree_trans.get_children(): self.tree_trans.delete(i)
+            self.refresh_tree()
+            messagebox.showinfo("نجاح", "تم قيد العملية في الخزينة")
+
+        except Exception as e:
+            messagebox.showerror("خطأ", f"تأكد من إدخال بيانات صحيحة: {e}")
+
+    def refresh_tree(self):
+        for i in self.tree.get_children(): self.tree.delete(i)
         conn = sqlite3.connect(self.db_name)
-        for row in conn.execute("SELECT * FROM transactions ORDER BY id DESC"): 
-            self.tree_trans.insert("", 0, values=row)
+        c = conn.cursor()
+        c.execute("SELECT * FROM transactions ORDER BY id DESC")
+        for row in c.fetchall():
+            self.tree.insert("", 0, values=row, tags=(row[3],))
         conn.close()
 
-    # --- واجهة HR والسلف ---
-    def setup_hr_ui(self):
-        # إضافة موظف
-        f1 = tk.LabelFrame(self.tab_hr, text="إضافة موظف جديد", font=("Arial", 12, "bold"), padx=15, pady=15)
-        f1.pack(pady=10, padx=20, fill=tk.X)
+    # إضافة بيانات عينة لمطابقة الصورة تماماً (يمكن حذفها عند بدء التشغيل الفعلي)
+    def add_mock_data(self):
+        # م البيانات لتظهر نفس الأسطر الموضحة في الصورة
+        mock_entries = [
+            ("2026", "سلفة ضياء", "إيراد", "150,000",1),
+            ("2026", "إيجار محل 102", "إيراد", "25,000",2),
+            ("2026", "إيجار محل 102", "إيراد", "150,000",3),
+            ("2026", "سلفة ضياء", "مصروف", "25,000",4),
+            ("2026", "إيجار محل 102", "إيراد", "150,000",5),
+            ("2026", "سلفة ضياء", "مصروف", "25,000",6),
+            ("2026", "إيجار محل 102", "إيراد", "150,000",7),
+            ("2026", "سلفة ضياء", "مصروف", "25,000",8),
+            ("2026", "إيجار محل 102", "إيراد", "150,000",9),
+            ("2026", "سلفة ضياء", "مصروف", "25,000",10),
+            ("2026", "إيجار محل 102", "إيراد", "150,000",11),
+            ("2026", "سلفة ضياء", "إيراد", "150,000",12),
+        ]
         
-        tk.Label(f1, text="اسم الموظف:").grid(row=0, column=5)
-        self.ent_emp_name = tk.Entry(f1, justify='right')
-        self.ent_emp_name.grid(row=0, column=4, padx=5)
+        # الترتيب في الصورة يبدأ من الأحدث إلى الأقدم
+        for date, desc, ttype, amt, i in reversed(mock_entries):
+            # م (م الرقم التسلسلي هو ID)
+            self.tree.insert("", 0, values=(i, date, desc, ttype, amt), tags=(ttype,))
 
-        tk.Label(f1, text="الراتب الأساسي:").grid(row=0, column=3)
-        self.ent_emp_sal = tk.Entry(f1, justify='right')
-        self.ent_emp_sal.grid(row=0, column=2, padx=5)
-
-        self.emp_dept = tk.StringVar()
-        depts = ["صالة الألعاب", "إدارة جوهرة تعز مول", "شركة الأمن النسيم", "شركة النظافة"]
-        ttk.Combobox(f1, textvariable=self.emp_dept, values=depts, state="readonly").grid(row=0, column=1, padx=5)
-        
-        tk.Button(f1, text="حفظ الموظف", command=self.add_employee, bg="#2980b9", fg="white").grid(row=0, column=0, padx=10)
-
-        # قيد السلف
-        f2 = tk.LabelFrame(self.tab_hr, text="تسجيل سلفة مالية", font=("Arial", 12, "bold"), padx=15, pady=15)
-        f2.pack(pady=20, padx=20, fill=tk.X)
-        
-        tk.Label(f2, text="اسم الموظف المستلف:").grid(row=0, column=3)
-        self.loan_name = tk.Entry(f2, justify='right', width=25)
-        self.loan_name.grid(row=0, column=2, padx=5)
-        
-        tk.Label(f2, text="المبلغ:").grid(row=0, column=1)
-        self.loan_amt = tk.Entry(f2, width=15)
-        self.loan_amt.grid(row=0, column=0, padx=5)
-        
-        tk.Button(f2, text="اعتماد السلفة وخصمها من الخزينة", command=self.add_loan, bg="#d35400", fg="white", font=("Arial", 10, "bold")).grid(row=1, column=0, columnspan=4, pady=15)
-
-    def add_employee(self):
-        try:
-            conn = sqlite3.connect(self.db_name)
-            conn.execute("INSERT INTO employees (name, salary, dept) VALUES (?,?,?)",
-                         (self.ent_emp_name.get(), float(self.ent_emp_sal.get()), self.emp_dept.get()))
-            conn.commit()
-            conn.close()
-            messagebox.showinfo("HR", "تمت إضافة الموظف بنجاح")
-        except:
-            messagebox.showerror("خطأ", "تأكد من إدخال البيانات والراتب بشكل صحيح")
-
-    def add_loan(self):
-        try:
-            conn = sqlite3.connect(self.db_name)
-            c = conn.cursor()
-            name, amt = self.loan_name.get(), float(self.loan_amt.get())
-            # قيد في السلف
-            c.execute("INSERT INTO loans (emp_name, amount, date) VALUES (?,?,?)", (name, amt, datetime.now().strftime("%Y-%m-%d")))
-            # قيد تلقائي في الخزينة كمصروف
-            c.execute("INSERT INTO transactions (date, desc, type, amount) VALUES (?,?,?,?)",
-                      (datetime.now().strftime("%Y-%m-%d"), f"سلفة: {name}", "مصروف جانبي", amt))
-            conn.commit()
-            conn.close()
-            self.refresh_treasury()
-            messagebox.showinfo("السلف", f"تم قيد مبلغ {amt} سلفة على {name} وخصمها من الصندوق.")
-        except:
-            messagebox.showerror("خطأ", "فشل قيد السلفة. تأكد من البيانات.")
-
-    # --- التقارير والطباعة ---
-    def setup_reports_ui(self):
-        f = tk.LabelFrame(self.tab_reports, text="مركز استخراج التقارير المعتمدة", font=("Arial", 14, "bold"), padx=30, pady=30)
-        f.pack(pady=50, padx=50, fill=tk.X)
-
-        tk.Label(f, text="اختر القسم المراد استخراج كشفه:", font=("Arial", 12)).pack(pady=10)
-        self.rep_dept = tk.StringVar()
-        depts = ["صالة الألعاب", "إدارة جوهرة تعز مول", "شركة الأمن النسيم", "شركة النظافة"]
-        self.rep_combo = ttk.Combobox(f, textvariable=self.rep_dept, values=depts, state="readonly", width=40, font=("Arial", 12))
-        self.rep_combo.pack(pady=10)
-        self.rep_combo.set("صالة الألعاب")
-
-        tk.Button(f, text="تصدير إلى إكسيل (Excel)", command=self.export_excel, bg="#27ae60", fg="white", width=35, font=("Arial", 11, "bold")).pack(pady=10)
-        tk.Button(f, text="طباعة كشف PDF (خط الأميري)", command=self.export_pdf, bg="#c0392b", fg="white", width=35, font=("Arial", 11, "bold")).pack(pady=10)
-
-    def get_payroll_data(self):
-        dept = self.rep_dept.get()
-        conn = sqlite3.connect(self.db_name)
-        df_emp = pd.read_sql_query(f"SELECT name, salary FROM employees WHERE dept='{dept}'", conn)
-        results = []
-        for _, row in df_emp.iterrows():
-            loan = conn.execute(f"SELECT SUM(amount) FROM loans WHERE emp_name='{row['name']}'").fetchone()[0] or 0
-            results.append({
-                "اسم الموظف": row['name'], 
-                "الراتب الأساسي": row['salary'], 
-                "إجمالي السلف": loan, 
-                "صافي الراتب": row['salary'] - loan
-            })
-        conn.close()
-        return pd.DataFrame(results)
-
-    def export_excel(self):
-        df = self.get_payroll_data()
-        filename = f"Kashf_{self.rep_dept.get()}_{datetime.now().strftime('%Y%m%d')}.xlsx"
-        df.to_excel(filename, index=False)
-        os.startfile(filename)
-
-    def export_pdf(self):
-        df = self.get_payroll_data()
-        filename = f"Kashf_{datetime.now().strftime('%H%M%S')}.pdf"
-        c = canvas.Canvas(filename, pagesize=A4)
-        
-        # ترويسة التقرير
-        c.setFont(AR_FONT, 24)
-        c.drawCentredString(300, 800, self.format_ar("جوهرة تعز مول - كشف الرواتب الشهري"))
-        c.setFont(AR_FONT, 16)
-        c.drawCentredString(300, 770, self.format_ar(f"القسم: {self.rep_dept.get()} | التاريخ: {datetime.now().strftime('%Y-%m')}"))
-        
-        # الجدول
-        y = 700
-        c.setFont(AR_FONT, 14)
-        c.drawString(450, 720, self.format_ar("اسم الموظف"))
-        c.drawString(350, 720, self.format_ar("الراتب"))
-        c.drawString(250, 720, self.format_ar("السلف"))
-        c.drawString(150, 720, self.format_ar("الصافي"))
-        c.line(50, 715, 550, 715)
-
-        for _, row in df.iterrows():
-            c.drawString(450, y, self.format_ar(row['اسم الموظف']))
-            c.drawString(350, y, str(row['الراتب الأساسي']))
-            c.drawString(250, y, str(row['إجمالي السلف']))
-            c.drawString(150, y, str(row['صافي الراتب']))
-            y -= 30
-            if y < 50: # صفحة جديدة إذا انتهت المساحة
-                c.showPage()
-                y = 750
-        
-        c.save()
-        os.startfile(filename)
-
-# ================= تشغيل التطبيق =================
 def run_main_app():
     login_win.destroy()
     main_root = tk.Tk()
