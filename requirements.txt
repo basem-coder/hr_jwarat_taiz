@@ -1,5 +1,7 @@
 pandas
-openpyxl
-reportlab
-arabic-reshaper
-python-bidi
+openpyxl 
+reportlab 
+arabic-reshaper 
+python-bidi 
+pywhatkit 
+pydrive2
